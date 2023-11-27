@@ -19,7 +19,7 @@ jobs:
         with:
           scan-type: 'config'
           format: 'sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
+          #severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
           exit-code: '1'
           output: 'trivy-iac-results.sarif'
           ignore-unfixed: false
@@ -36,7 +36,7 @@ jobs:
         with:
           scan-type: 'fs'
           format: 'sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
+          #severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
           exit-code: '1'
           output: 'trivy-fs-results.sarif'
           ignore-unfixed: false
