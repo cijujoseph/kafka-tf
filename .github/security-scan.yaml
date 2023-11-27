@@ -1,0 +1,66 @@
+name: security-scan
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+  security-scan:
+    name: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: trivy-iac-configuration-scan
+        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 # <= corresponds to Trivy Action version v0.14.0
+        with:
+          scan-type: 'config'
+          format: 'sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
+          exit-code: '1'
+          output: 'trivy-iac-results.sarif'
+          ignore-unfixed: false
+          timeout: '5m'
+          limit-severities-for-sarif: false # must be set to false to work with severity parameter
+      - name: upload-iac-scan-results-to-github
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          category: 'config-scan-result'
+          sarif_file: 'trivy-iac-results.sarif'
+      - name: trivy-fs-configuration-scan
+        uses: aquasecurity/trivy-action@2b6a709cf9c4025c5438138008beaddbb02086f0 # <= corresponds to Trivy Action version v0.14.0
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'  # <= Configure "severity" here
+          exit-code: '1'
+          output: 'trivy-fs-results.sarif'
+          ignore-unfixed: false
+          timeout: '5m'
+          scanners: vuln,secret,config
+          limit-severities-for-sarif: false # must be set to false to work with severity parameter
+      - name: upload-fs-scan-results-to-github
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          category: 'fs-scan-result'
+          sarif_file: 'trivy-fs-results.sarif'
+      ## workaround for issue https://github.com/aquasecurity/trivy-action/issues/228
+      - name: Check trivy iac scan results
+        run: |
+          if grep -qE 'HIGH|CRITICAL|MEDIUM' trivy-iac-results.sarif; then
+            echo "Vulnerabilities found"
+            exit 1
+          else
+            echo "No significant vulnerabilities found"
+            exit 0
+          fi
+      - name: Check trivy fs scan results
+        run: |
+          if grep -qE 'HIGH|CRITICAL|MEDIUM' trivy-fs-results.sarif; then
+            echo "Vulnerabilities found"
+            exit 1
+          else
+            echo "No significant vulnerabilities found"
+            exit 0
+          fi
